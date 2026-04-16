@@ -2,120 +2,124 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>To-Do Pro Max</title>
+<title>To-Do List Avançado</title>
 
 <style>
-:root {
-    --bg: #f0f4f8;
-    --card: #ffffff;
-    --text: #333;
-}
-
-.dark {
-    --bg: #e6ecf0;
-    --card: #ffffff;
-    --text: #111;
-}
-
 body {
-    font-family: Arial;
-    background: var(--bg);
-    color: var(--text);
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
     display: flex;
     justify-content: center;
-    margin-top: 30px;
+    margin-top: 50px;
 }
 
+/* CONTAINER */
 .container {
-    background: var(--card);
+    background: #fff;
     padding: 20px;
     width: 400px;
     border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
 
 h1 {
     text-align: center;
 }
 
-.clock {
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 14px;
-}
-
+/* INPUTS */
 input, select, button {
     width: 100%;
     padding: 10px;
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
+/* BOTÃO */
 button {
-    background: #4a90e2;
+    background-color: #007BFF;
     color: white;
     border: none;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 button:hover {
-    opacity: 0.9;
+    transform: scale(1.05);
 }
 
-/* lista */
+button:active {
+    transform: scale(0.95);
+}
+
+/* LISTA */
 ul {
     list-style: none;
     padding: 0;
+    margin-top: 20px;
 }
 
 li {
     padding: 10px;
-    margin-top: 10px;
-    border-radius: 6px;
+    margin-bottom: 10px;
+    border-radius: 5px;
     display: flex;
-    flex-direction: column;
-    animation: fade 0.3s;
+    justify-content: space-between;
+    align-items: center;
+    transition: 0.3s;
+    animation: aparecer 0.3s ease;
 }
 
-@keyframes fade {
-    from {opacity:0; transform:translateY(-5px);}
-    to {opacity:1;}
+li:hover {
+    transform: scale(1.02);
 }
 
-/* prioridades */
-.alta { background: #ff6b6b; color: white; }
-.media { background: #ffd166; }
-.baixa { background: #6bcf63; color: white; }
-
-/* status */
-.atrasado {
-    border-left: 5px solid red;
+/* ANIMAÇÃO DE ENTRADA */
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.ok {
-    border-left: 5px solid green;
+/* REMOÇÃO */
+.removendo {
+    opacity: 0;
+    transform: translateX(50px);
 }
 
+/* PRIORIDADES */
+.alta {
+    background-color: #ff4d4d;
+    color: white;
+}
+
+.media {
+    background-color: #ffc107;
+}
+
+.baixa {
+    background-color: #28a745;
+    color: white;
+}
+
+/* CONCLUÍDA */
 .concluida {
     text-decoration: line-through;
     opacity: 0.6;
+    transform: scale(0.98);
 }
 
-/* botões */
-.actions {
+/* BOTÕES DA TAREFA */
+.task-buttons {
     display: flex;
     gap: 5px;
-    margin-top: 5px;
 }
 
-.actions button {
-    width: 50%;
-}
-
-/* paginação */
-.pagination {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
+.task-buttons button {
+    width: 40px;
 }
 </style>
 </head>
@@ -123,13 +127,9 @@ li {
 <body>
 
 <div class="container">
-    <h1>To-Do Pro</h1>
+    <h1>To-Do List</h1>
 
-    <div class="clock" id="clock"></div>
-
-    <button onclick="toggleTheme()">🎨 Tema</button>
-
-    <input type="text" id="texto" placeholder="Tarefa">
+    <input type="text" id="tarefa" placeholder="Digite uma tarefa">
 
     <select id="prioridade">
         <option value="alta">Alta</option>
@@ -137,128 +137,96 @@ li {
         <option value="baixa">Baixa</option>
     </select>
 
-    <input type="datetime-local" id="data">
-
-    <button onclick="add()">Adicionar</button>
+    <button onclick="adicionarTarefa()">Adicionar</button>
 
     <ul id="lista"></ul>
-
-    <div class="pagination">
-        <button onclick="prev()">⬅</button>
-        <span id="page"></span>
-        <button onclick="next()">➡</button>
-    </div>
 </div>
 
 <script>
-let tarefas = JSON.parse(localStorage.getItem("tarefas")) || [];
-let pagina = 1;
-const porPagina = 5;
+let tarefas = [];
 
-// relógio
-setInterval(() => {
-    document.getElementById("clock").innerText =
-        new Date().toLocaleString();
-}, 1000);
-
-// salvar
-function salvar() {
-    localStorage.setItem("tarefas", JSON.stringify(tarefas));
-}
-
-// adicionar
-function add() {
-    const texto = document.getElementById("texto").value;
+// ADICIONAR
+function adicionarTarefa() {
+    const input = document.getElementById("tarefa");
     const prioridade = document.getElementById("prioridade").value;
-    const data = document.getElementById("data").value;
 
-    if (!texto) return alert("Digite algo");
+    if (input.value.trim() === "") {
+        alert("Digite uma tarefa!");
+        return;
+    }
 
-    tarefas.push({
+    const tarefa = {
         id: Date.now(),
-        texto,
-        prioridade,
-        data,
-        done: false
-    });
+        texto: input.value,
+        prioridade: prioridade,
+        concluida: false
+    };
 
-    salvar();
+    tarefas.push(tarefa);
     render();
+
+    input.value = "";
 }
 
-// render
+// RENDERIZAR
 function render() {
     const lista = document.getElementById("lista");
     lista.innerHTML = "";
 
-    const inicio = (pagina - 1) * porPagina;
-    const fim = inicio + porPagina;
-
-    const paginaTarefas = tarefas.slice(inicio, fim);
-
-    paginaTarefas.forEach(t => {
+    tarefas.forEach(tarefa => {
         const li = document.createElement("li");
 
-        let status = "ok";
-        if (t.data && new Date(t.data) < new Date() && !t.done) {
-            status = "atrasado";
-        }
+        li.className = tarefa.prioridade + (tarefa.concluida ? " concluida" : "");
+        li.setAttribute("data-id", tarefa.id);
 
-        li.className = `${t.prioridade} ${status} ${t.done ? "concluida" : ""}`;
+        const span = document.createElement("span");
+        span.textContent = tarefa.texto;
+        span.onclick = () => toggleTarefa(tarefa.id);
 
-        li.innerHTML = `
-            <strong>${t.texto}</strong>
-            <small>${t.data || "Sem data"}</small>
-            <div class="actions">
-                <button onclick="toggle(${t.id})">✔</button>
-                <button onclick="del(${t.id})">X</button>
-            </div>
-        `;
+        const botoes = document.createElement("div");
+        botoes.className = "task-buttons";
+
+        // BOTÃO CONCLUIR
+        const btnCheck = document.createElement("button");
+        btnCheck.textContent = "✔";
+        btnCheck.onclick = () => toggleTarefa(tarefa.id);
+
+        // BOTÃO EXCLUIR
+        const btnDelete = document.createElement("button");
+        btnDelete.textContent = "X";
+        btnDelete.onclick = () => removerTarefa(tarefa.id);
+
+        botoes.appendChild(btnCheck);
+        botoes.appendChild(btnDelete);
+
+        li.appendChild(span);
+        li.appendChild(botoes);
 
         lista.appendChild(li);
     });
-
-    document.getElementById("page").innerText =
-        `Página ${pagina}`;
 }
 
-// concluir
-function toggle(id) {
+// CONCLUIR
+function toggleTarefa(id) {
     tarefas = tarefas.map(t =>
-        t.id === id ? {...t, done: !t.done} : t
+        t.id === id ? { ...t, concluida: !t.concluida } : t
     );
-    salvar();
     render();
 }
 
-// deletar
-function del(id) {
-    tarefas = tarefas.filter(t => t.id !== id);
-    salvar();
-    render();
-}
+// REMOVER COM ANIMAÇÃO
+function removerTarefa(id) {
+    const item = document.querySelector(`li[data-id='${id}']`);
 
-// paginação
-function next() {
-    if (pagina * porPagina < tarefas.length) {
-        pagina++;
-        render();
+    if (item) {
+        item.classList.add("removendo");
+
+        setTimeout(() => {
+            tarefas = tarefas.filter(t => t.id !== id);
+            render();
+        }, 300);
     }
 }
-
-function prev() {
-    if (pagina > 1) {
-        pagina--;
-        render();
-    }
-}
-
-// tema
-function toggleTheme() {
-    document.body.classList.toggle("dark");
-}
-
-render();
 </script>
 
 </body>
